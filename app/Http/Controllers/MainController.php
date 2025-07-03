@@ -44,19 +44,19 @@ class MainController extends Controller
             $numero2 = rand($min, $max);
 
             $exercicio = '';
-            $solução = '';
+            $solucao = '';
             switch ($operacao) {
                 case 'sum':
                     $exercicio = "$numero1 + $numero2 =";
-                    $solução = $numero1 + $numero2;
+                    $solucao = $numero1 + $numero2;
                     break;
                 case 'subtraction':
                     $exercicio = "$numero1 - $numero2 =";
-                    $solução = $numero1 - $numero2;
+                    $solucao = $numero1 - $numero2;
                     break;
                 case 'multiplication':
                     $exercicio = "$numero1 x $numero2 =";
-                    $solução = $numero1 * $numero2;
+                    $solucao = $numero1 * $numero2;
                     break;
                 case 'division':
 
@@ -66,26 +66,63 @@ class MainController extends Controller
                     }
 
                     $exercicio = "$numero1 : $numero2 =";
-                    $solução = $numero1 / $numero2;
+                    $solucao = $numero1 / $numero2;
+                    $solucao = number_format($solucao, 2, ',', ''); 
                     break;
             }
             $exercicios[] = [
                 'numero_exercicio' => $i,
                 'exercicio' => $exercicio,
-                'solucao' => "$exercicio $solução"
+                'solucao' => "$exercicio $solucao"
             ];
         }
+
+        session(['exercicios' => $exercicios]);
 
        return view('operacoes', ['exercicios' => $exercicios]);
     }
 
     public function listarExercicios()
     {
-        echo 'listarExercicios';
+        if(!session()->has('exercicios')){
+            return redirect()->route('principal');
+        }
+        
+        $exercicios = session('exercicios');
+        echo '<h1>Exercicios:</h1>';
+        foreach($exercicios as $exercicio){
+            echo '<h2><small>'.$exercicio['exercicio'].'</small></h2>';
+        }
+        echo '<hr>';
+        echo '<h1>solucao:</h1>';
+        foreach($exercicios as $exercicio){
+            echo '<h2><small>'.str_pad($exercicio['solucao'], 2,"0",STR_PAD_LEFT).'</small></h2>';
+        }
     }
 
     public function exportarExercicios()
     {
-        echo 'exportar';
+        
+        if(!session()->has('exercicios')){
+            return redirect()->route('principal');
+        }
+        $nomeArquivo = 'gerador'.date('YmdHis').'.txt';
+        $conteudo = '';
+        $exercicios = session('exercicios');
+        $conteudo .= "Exercicios:\n";
+        foreach($exercicios as $exercicio){
+            $conteudo .= $exercicio['exercicio'] . "\n";
+        }
+
+        $conteudo .= "----------------------------\n";
+        $conteudo .= "Solucoes:\n";
+        foreach($exercicios as $exercicio){
+            $conteudo .= $exercicio['solucao'] . "\n";
+        }
+
+        return response($conteudo)
+                ->header('Content-Type', 'text/plain' )
+                ->header('Content-Disposition', 'attachment; filename="'.$nomeArquivo.'"' );
     }
+    
 }
